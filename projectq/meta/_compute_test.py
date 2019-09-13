@@ -369,6 +369,26 @@ def test_exception_if_no_compute_but_uncompute2():
     with pytest.raises(_compute.NoComputeSectionError):
         _compute.Uncompute(eng)
 
+def test_exception_if_uncompute_within_compute():
+    eng = MainEngine(backend=DummyEngine(), engine_list=[DummyEngine()])
+    with _compute.Compute(eng):
+        with pytest.raises(_compute.NoComputeSectionError):
+            _compute.Uncompute(eng)
+
+def test_exception_if_customuncompute_within_compute():
+    eng = MainEngine(backend=DummyEngine(), engine_list=[DummyEngine()])
+    with _compute.Compute(eng):
+        with pytest.raises(_compute.NoComputeSectionError):
+            with _compute.CustomUncompute(eng):
+                pass
+
+def test_exception_if_customuncompute_within_compute2():
+    eng = MainEngine(backend=DummyEngine(), engine_list=[DummyEngine()])
+    with _compute.Compute(eng):
+        with _compute.Compute(eng):
+            with pytest.raises(_compute.NoComputeSectionError):
+                with _compute.CustomUncompute(eng):
+                    pass
 
 def test_qubit_management_error():
     eng = MainEngine(backend=DummyEngine(), engine_list=[DummyEngine()])

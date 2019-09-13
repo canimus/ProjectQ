@@ -76,7 +76,7 @@ class ComputeEngine(BasicEngine):
         """
         BasicEngine.__init__(self)
         self._l = []
-        self._compute = True
+        self.compute = True
         # Save all qubit ids from qubits which are created or destroyed.
         self._allocated_qubit_ids = set()
         self._deallocated_qubit_ids = set()
@@ -217,7 +217,7 @@ class ComputeEngine(BasicEngine):
             QubitManagementError: If qubit has been deallocated in Compute
                 section which has not been allocated in Compute section
         """
-        self._compute = False
+        self.compute = False
         if not self._allocated_qubit_ids.issuperset(
            self._deallocated_qubit_ids):
             raise QubitManagementError(
@@ -233,7 +233,7 @@ class ComputeEngine(BasicEngine):
         Args:
             command_list (list<Command>): List of commands to receive.
         """
-        if self._compute:
+        if self.compute:
             for cmd in command_list:
                 if cmd.gate == Allocate:
                     self._allocated_qubit_ids.add(cmd.qubits[0][0].id)
@@ -388,6 +388,12 @@ class CustomUncompute(object):
             raise NoComputeSectionError(
                 "Invalid call to CustomUncompute: No corresponding"
                 "'with Compute' statement found.")
+
+        # if compute_eng is in compute-mode, CustomUncompute is not allowed.
+        if compute_eng.compute:
+            raise NoComputeSectionError(
+                "Invalid call to CustomUncompute: No corresponding"
+                "'with Compute' statement found.")
         # Make copy so there is not reference to compute_eng anymore
         # after __enter__
         self._allocated_qubit_ids = compute_eng._allocated_qubit_ids.copy()
@@ -436,5 +442,12 @@ def Uncompute(engine):
         raise NoComputeSectionError("Invalid call to Uncompute: No "
                                     "corresponding 'with Compute' statement "
                                     "found.")
+
+    # If compute_eng is in compute-mode, Uncompute op is not allowed in that context.
+    if compute_eng.compute:
+        raise NoComputeSectionError("Invalid call to Uncompute: No "
+                                    "corresponding 'with Compute' statement "
+                                    "found.")
+
     compute_eng.run_uncompute()
     drop_engine_after(engine)
